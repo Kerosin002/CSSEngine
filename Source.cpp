@@ -1,165 +1,15 @@
 #include <iostream>
-#include <cstring>
 
 #define ENDCSS '?'
 #define BEGCSS '*'
-//#define EOF '~'
+#define EOF '~'
 #define TT 8
 
 using namespace std;
 
 
 
-class MyString {
-public:
-    // Constructors
-    MyString();                         // Default constructor
-    MyString(const char* str);          // Constructor with C-string input
-    MyString(const MyString& other);    // Copy constructor
-    MyString(MyString&& other);         // Move constructor
 
-    // Destructor
-    ~MyString();
-
-    // Assignment operators
-    MyString& operator=(const MyString& other);   // Copy assignment
-    MyString& operator=(MyString&& other);        // Move assignment
-
-    // Member functions
-    int length() const;                // Returns the length of the string
-    const char* c_str() const;         // Returns the C-string representation
-    void append(const char* str);     // Appends a C-string to the string
-    void clear();                     // Clears the string
-    friend std::istream& operator>>(std::istream& is, MyString& myString);
-    
-    char& operator[](int index);
-    const char& operator[](int index) const;
-
-private:
-    char* data_;   // Pointer to the dynamically allocated character array
-    int length_;   // Length of the string
-};
-
-// Default constructor
-MyString::MyString() : data_(nullptr), length_(0) {}
-
-// Constructor with C-string input
-MyString::MyString(const char* str) {
-    length_ = strlen(str);
-    data_ = new char[length_ + 1];
-    strcpy(data_, str);
-}
-
-// Copy constructor
-MyString::MyString(const MyString& other) {
-    length_ = other.length_;
-    data_ = new char[length_ + 1];
-    strcpy(data_, other.data_);
-}
-
-// Move constructor
-MyString::MyString(MyString&& other) {
-    length_ = other.length_;
-    data_ = other.data_;
-    other.length_ = 0;
-    other.data_ = nullptr;
-}
-
-// Destructor
-MyString::~MyString() {
-    delete[] data_;
-}
-
-// Copy assignment operator
-MyString& MyString::operator=(const MyString& other) {
-    if (this == &other) {
-        return *this;
-    }
-
-    delete[] data_;
-    length_ = other.length_;
-    data_ = new char[length_ + 1];
-    strcpy(data_, other.data_);
-
-    return *this;
-}
-
-// Move assignment operator
-MyString& MyString::operator=(MyString&& other) {
-    if (this == &other) {
-        return *this;
-    }
-
-    delete[] data_;
-    length_ = other.length_;
-    data_ = other.data_;
-    other.length_ = 0;
-    other.data_ = nullptr;
-
-    return *this;
-}
-
-// Returns the length of the string
-int MyString::length() const {
-    return length_;
-}
-
-// Returns the C-string representation
-const char* MyString::c_str() const {
-    return data_;
-}
-
-// Appends a C-string to the string
-void MyString::append(const char* str) {
-    int newLength = length_ + strlen(str);
-    char* newData = new char[newLength + 1];
-    strcpy(newData, data_);
-    strcat(newData, str);
-    delete[] data_;
-    data_ = newData;
-    length_ = newLength;
-}
-
-// Clears the string
-void MyString::clear() {
-    delete[] data_;
-    data_ = nullptr;
-    length_ = 0;
-}
-std::istream& operator>>(std::istream& is, MyString& myString) {
-    char buffer[1024];
-    is >> buffer;
-    myString.clear();
-
-    // Allocate new memory for the string data
-    myString.length_ = strlen(buffer);
-    myString.data_ = new char[myString.length_ + 1];
-
-    // Copy the input buffer to the string data
-    strcpy(myString.data_, buffer);
-
-    return is;
-}
-char& MyString::operator[](int index) {
-    if (index >= 0 && index < length_) {
-        return data_[index];
-    }
-    else {
-        // Throw an exception for out-of-bounds access
-        throw std::out_of_range("Index out of range");
-    }
-}
-
-// Overload [] operator to provide const access to individual characters
-const char& MyString::operator[](int index) const {
-    if (index >= 0 && index < length_) {
-        return data_[index];
-    }
-    else {
-        // Throw an exception for out-of-bounds access
-        throw std::out_of_range("Index out of range");
-    }
-}
 
 
 template <typename T>
@@ -333,7 +183,7 @@ class CSS {
 	LinkedList<Section*> sectionsList;
     
 
-	void populateLists(MyString inputArray,int inputSize) {
+	void populateLists(LinkedList<char> inputArray,int inputSize) {
 		bool inCSS = true; // track if we're currently in CSS or command section
 		LinkedList<char> firstListNode;
 		LinkedList<char> firstListComNode;
@@ -341,22 +191,24 @@ class CSS {
 		int nodeCount = 0;
 		int nodeComCount = -1;
 		for (int i = 0; i < inputSize; i++) {
-			if (inputArray[i] == ENDCSS && inputArray[i + 1] == ENDCSS && inputArray[i + 2] == ENDCSS && inputArray[i + 3] == ENDCSS) {
-				inCSS = false;
-				nodeComCount++;
-				LinkedList <char> newComLinkedList;
-				fullCom.add(newComLinkedList);
-				i += 4;
-			}
-			
-			if (inputArray[i] == BEGCSS && inputArray[i + 1] == BEGCSS && inputArray[i + 2] == BEGCSS && inputArray[i + 3] == BEGCSS) {
-				inCSS = true;
-				nodeCount++;
-				LinkedList <char> newLinkedList;
-				fullCSS.add(newLinkedList);
-				i += 4;
+            if (i + 4 < inputSize) {
+                if (inputArray[i] == ENDCSS && inputArray[i + 1] == ENDCSS && inputArray[i + 2] == ENDCSS && inputArray[i + 3] == ENDCSS) {
+                    inCSS = false;
+                    nodeComCount++;
+                    LinkedList <char> newComLinkedList;
+                    fullCom.add(newComLinkedList);
+                    i += 4;
+                }
 
-			}
+                if (inputArray[i] == BEGCSS && inputArray[i + 1] == BEGCSS && inputArray[i + 2] == BEGCSS && inputArray[i + 3] == BEGCSS) {
+                    inCSS = true;
+                    nodeCount++;
+                    LinkedList <char> newLinkedList;
+                    fullCSS.add(newLinkedList);
+                    i += 4;
+
+                }
+            }
 			if (inCSS && inputArray[i]!=EOF) {
 				fullCSS[nodeCount].add(inputArray[i]);
 			}
@@ -371,7 +223,7 @@ class CSS {
 	
 
 public:
-	CSS(MyString inputArray, int inputSize) {
+	CSS(LinkedList<char> inputArray, int inputSize) {
 		populateLists(inputArray, inputSize);
 	}
     void cssSpliter() {
@@ -406,24 +258,21 @@ public:
 };
 
 
-MyString readInput() {
-    MyString c;
-	while (!cin.eof()) {
-		cin >> c;
-	}
-	return c;
-}
-
-void inputTransfer(LinkedList<char> input, char* inputArray) {
-
-	for (int i = 0; i < input.getSize(); i++) {
-		inputArray[i] = input[i];
+void readInput(LinkedList<char> list) {
+     
+     char k=' ';
+	while (k!=EOF) {
+        cin >> k;
+        list.add(k);
 	}
 }
+
+
+
 int main() {
-    MyString input = " ";
-    input = readInput();
-    CSS css(input, input.length());
+    LinkedList <char> input;
+    readInput(input);
+    CSS css(input, input.getSize());
     css.cssSpliter();
     css.outputSection();
     cout << "\n";
