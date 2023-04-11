@@ -2,7 +2,7 @@
 
 #define ENDCSS '?'
 #define BEGCSS '*'
-#define EOF '~'
+//#define EOF '~'
 #define TT 8
 
 using namespace std;
@@ -86,11 +86,21 @@ public:
     
 
     T& operator[](int index) {
-        Node* current = head;
-        for (int i = 0; i < index; i++) {
-            current = current->next;
+        
+        if (index < size / 2) {
+            Node* current = head;
+            for (int i = 0; i < index; i++) {
+                current = current->next;
+            }
+            return current->data;
         }
-        return current->data;
+        else {
+            Node* current = tail;
+            for (int i = size - 1; i >index;i--)
+                current = current->prev;
+            return current->data;
+        }
+        
     }
 
     template <typename U = T>
@@ -176,13 +186,10 @@ struct Section {
 	int commandQue;
 	LinkedList<char> section;
 };
-
 class CSS {
-	LinkedList<LinkedList<char>> fullCSS;
 	LinkedList<LinkedList<char>> fullCom;
-	LinkedList<Section*> sectionsList;
-    
-
+    LinkedList<LinkedList<char>> fullCSS;
+    LinkedList<Section*> sectionsList;
 	void populateLists(LinkedList<char> inputArray,int inputSize) {
 		bool inCSS = true; // track if we're currently in CSS or command section
 		LinkedList<char> firstListNode;
@@ -199,14 +206,12 @@ class CSS {
                     fullCom.add(newComLinkedList);
                     i += 4;
                 }
-
                 if (inputArray[i] == BEGCSS && inputArray[i + 1] == BEGCSS && inputArray[i + 2] == BEGCSS && inputArray[i + 3] == BEGCSS) {
                     inCSS = true;
                     nodeCount++;
                     LinkedList <char> newLinkedList;
                     fullCSS.add(newLinkedList);
                     i += 4;
-
                 }
             }
 			if (inCSS && inputArray[i]!=EOF) {
@@ -217,11 +222,6 @@ class CSS {
 			}
 		}
 	}
-    
-
-
-	
-
 public:
 	CSS(LinkedList<char> inputArray, int inputSize) {
 		populateLists(inputArray, inputSize);
@@ -233,48 +233,63 @@ public:
             Section section[TT];
             for (int i = 0; i < TT; i++) {
                 do {
-                    section[i].section.add(fullCSS[k][cssPos]);
-                    section[i].commandQue = k;
+                    if (fullCSS[k][cssPos] != '\n')
+                    {
+                        section[i].section.add(fullCSS[k][cssPos]);
+                        section[i].commandQue = k;
+                    }
                     cssPos++;
-                } while (fullCSS[k][cssPos] != '}');
-                if (cssPos == fullCSS[k].getSize() - 1) {
+                } while (fullCSS[k][cssPos - 1] != '}' && cssPos < fullCSS[k].getSize());
+
+                if (cssPos == fullCSS[k].getSize()-1) {
                     k++;
                     cssPos = 0;
-                    if (k == fullCSS.getSize())
+                    if (k == fullCSS.getSize()) {
                         i = TT;
+                    }
                 }
-
             }
             sectionsList.add(section);
         }
-
     }
-
-	
-    void outputSection() {
-        
+    void fullCSSOutput() {
+        for (int i = 0; i < fullCSS.getSize(); i++) {
+            cout << fullCSS[i];
+        }
+    }
+    void sectionOutput() {
         cout << sectionsList[0][0].section;
+        cout << sectionsList.getSize();
     }
+
+
+
 };
 
 
-void readInput(LinkedList<char> list) {
+LinkedList<char> readInput(LinkedList<char> list) {
      
      char k=' ';
-	while (k!=EOF) {
-        cin >> k;
+	while (cin.get(k)) {
         list.add(k);
+        //if (cin.eof())
+        if(k==EOF)
+            break;
 	}
+    return list;
 }
 
 
 
 int main() {
     LinkedList <char> input;
-    readInput(input);
+    input=readInput(input);
+    //cout << input;
     CSS css(input, input.getSize());
     css.cssSpliter();
-    css.outputSection();
+    //cout<<css.sectionsList[0][0].section;
+    //css.fullCSSOutput();
+    css.sectionOutput();
     cout << "\n";
     return 0;
 }
